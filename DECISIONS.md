@@ -1,0 +1,7 @@
+# DECISIONS.md
+
+1. **Indexes.** `employees`: unique `emp_code` (identity, duplicate guard), `(department, emp_code)` (sorted list), `(joined_on)` and `(department, joined_on)` (headcount). `attendance_logs`: unique `(emp_code, date)` (punch-in race, monthly), `(date desc, emp_code)` (list sort, month and range scans), `(status, date desc, emp_code)` (status filter), `(emp_code, punch_in desc)` (punch-out lookup). Rejected: an index on `late_minutes` or `work_hours`; analytics already narrow by date first, and it would slow every write.
+2. **Punch-in race.** Both requests work out the same IST date and try `insert_one`. The unique `(emp_code, date)` index lets only one insert win; the other gets `DuplicateKeyError` and I return 409. There is no read-then-write.
+3. **Ties.** `$setWindowFields` with `$rank` gives ties the same rank and skips the next one (1, 2, 2, 4). I filter `rank <= limit` after ranking, so everyone tied at the cutoff is returned, even if that is more than `limit` rows.
+4. **Headcount.** The summary starts from `employees` (joined on or before month end), `$lookup`s the logs, and `$unwind`s with `preserveNullAndEmptyArrays`. An employee with no logs still produces one row and is counted once.
+5. **100x data.** I would stop recomputing months from raw logs: keep a per-employee, per-day (or per-month) rollup updated on write, and copy `department` onto each log to avoid the `$lookup`.
