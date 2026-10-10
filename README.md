@@ -14,4 +14,4 @@ Needs MongoDB 6.0+ (uses `$setWindowFields`, `$densify`). Indexes are created at
 ## Notes
 - Every endpoint in `openapi.yaml` is implemented, including `/admin/explain/{endpoint}`.
 - Each endpoint and its explain share one plan function, so explain shows the real query.
-- Known gaps / honest status: <WRITE HERE what you tested against a real MongoDB and what you did not>.
+- Known gaps / honest status: Tested against MongoDB Atlas (7.x) with a small hand-made dataset (ties, no-log employees, weekend records, mid-month joiner, overnight shift, parallel punch-in/out). Not load-tested with 100k records.
